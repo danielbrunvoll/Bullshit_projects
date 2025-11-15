@@ -4,12 +4,17 @@ import random
 # --- constants ---
 WIDTH = 500
 HEIGHT = 500
-SPEED = 200
+SPEED = 100
 SPACE_SIZE = 20
 BODY_PARTS = 3
-SNAKE_COLOR = "#00FF00"
-FOOD_COLOR = "#FF0000"
-BACKGROUND_COLOR = "#000000"
+SNAKE_COLOR = "#39FF14"
+FOOD_COLOR = "#FF4136"
+BACKGROUND_COLOR = "#222222"
+TEXT_COLOR = "#FFFFFF"
+FONT_NAME = "Segoe UI"
+
+
+pending_directions = []
 
 
 class Snake:
@@ -41,6 +46,22 @@ class Food:
 
 
 def next_turn(snake, food):
+    global direction
+
+    if pending_directions:
+        new_dir = pending_directions.pop(0)
+        if new_dir == 'left':
+            if direction != 'right':
+                direction = new_dir
+        elif new_dir == 'right':
+            if direction != 'left':
+                direction = new_dir
+        elif new_dir == 'up':
+            if direction != 'down':
+                direction = new_dir
+        elif new_dir == 'down':
+            if direction != 'up':
+                direction = new_dir
     x, y = snake.coordinates[0]
 
     if direction == "up":
@@ -78,20 +99,9 @@ def next_turn(snake, food):
 
 
 def change_direction(new_direction):
-    global direction
-
-    if new_direction == "left":
-        if direction != "right":
-            direction = new_direction
-    elif new_direction == "right":
-        if direction != "left":
-            direction = new_direction
-    elif new_direction == "up":
-        if direction != "down":
-            direction = new_direction
-    elif new_direction == "down":
-        if direction != "up":
-            direction = new_direction
+    global pending_directions
+    if len(pending_directions) < 2:
+        pending_directions.append(new_direction)
 
 
 def check_collisions(snake):
@@ -113,23 +123,57 @@ def game_over():
     canvas.delete(tk.ALL)
     canvas.create_text(
         canvas.winfo_width() / 2,
-        canvas.winfo_height() / 2,
-        font=("consolas", 70),
+        canvas.winfo_height() / 2 - 40,
+        font=(FONT_NAME, 60, "bold"),
         text="GAME OVER",
-        fill="red",
+        fill=FOOD_COLOR,
         tag="gameover",
     )
+
+    button_style = {
+        "font": (FONT_NAME, 14),
+        "bg": "#444444",
+        "fg": TEXT_COLOR,
+        "activebackground": "#555555",
+        "activeforeground": TEXT_COLOR,
+        "borderwidth": 0,
+        "relief": "flat",
+        "padx": 10,
+        "pady": 5
+    }
+
+    retry_button = tk.Button(window, text="Retry", command=restart_game, **button_style)
+    canvas.create_window(canvas.winfo_width() / 2, canvas.winfo_height() / 2 + 40, window=retry_button)
+
+    exit_button = tk.Button(window, text="Exit", command=window.destroy, **button_style)
+    canvas.create_window(canvas.winfo_width() / 2, canvas.winfo_height() / 2 + 90, window=exit_button)
+
+def restart_game():
+    global snake, food, score, direction, pending_directions
+    
+    canvas.delete("all")
+    
+    score = 0
+    direction = 'down'
+    pending_directions = []
+    label.config(text="Score:{}".format(score))
+    
+    snake = Snake()
+    food = Food()
+    
+    next_turn(snake, food)
 
 
 window = tk.Tk()
 window.title("Snake game")
 window.resizable(False, False)
+window.config(bg=BACKGROUND_COLOR)
 
 score = 0
 direction = "down"
 
-label = tk.Label(window, text="Score:{}".format(score), font=("consolas", 40))
-label.pack()
+label = tk.Label(window, text="Score:{}".format(score), font=(FONT_NAME, 24), fg=TEXT_COLOR, bg=BACKGROUND_COLOR)
+label.pack(pady=10)
 
 canvas = tk.Canvas(window, bg=BACKGROUND_COLOR, height=HEIGHT, width=WIDTH)
 canvas.pack()
